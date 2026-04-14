@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}XSSGuard{% endblock %} — ML XSS Detection API</title>
+  <link rel="stylesheet" href="/static/css/theme.css">
+  {% block head %}{% endblock %}
+
+  {# ── Inject Firebase client config from Flask ── #}
+  <script>
+    window.FIREBASE_CONFIG = {
+      apiKey:            "{{ firebase.apiKey }}",
+      authDomain:        "{{ firebase.authDomain }}",
+      projectId:         "{{ firebase.projectId }}",
+      storageBucket:     "{{ firebase.storageBucket }}",
+      messagingSenderId: "{{ firebase.messagingSenderId }}",
+      appId:             "{{ firebase.appId }}"
+    };
+  </script>
+</head>
+<body>
+
+  {# ── Background effects ── #}
+  <canvas id="matrix-canvas"></canvas>
+  <div class="noise-overlay"></div>
+  <div class="scanline"></div>
+
+  {# ── Loading screen ── #}
+  <div id="loading-screen">
+    <div class="loading-logo">XSSGUARD</div>
+    <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+    <div class="loading-text" id="loading-text">INITIALIZING SECURITY PROTOCOLS...</div>
+  </div>
+
+  {# ── Toast container ── #}
+  <div id="toast-container"></div>
+
+  {# ── Navigation ── #}
+  <nav class="nav">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-hex"></div>
+      XSSGUARD
+    </a>
+    <div class="nav-links" id="nav-public">
+      <a href="/#features" class="nav-link">Features</a>
+      <a href="/#how-it-works" class="nav-link">How It Works</a>
+      <a href="/signin" class="nav-link">Dashboard</a>
+      <a href="/signin" class="nav-link">Sign In</a>
+      <a href="/signup" class="btn-primary btn-sm">Get API Key</a>
+    </div>
+    <div class="nav-links" id="nav-auth" style="display:none">
+      <span class="nav-link text-yellow" id="nav-username"></span>
+      <a href="/dashboard" class="nav-link">Dashboard</a>
+      <a href="#" class="nav-link" id="nav-logout">Logout</a>
+    </div>
+  </nav>
+
+  {# ── Page content ── #}
+  <main class="z-content" style="padding-top:{% block no_nav_pad %}60px{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  {# ── Shared scripts ── #}
+  <script type="module">
+    import { initMatrix, hideLoadingScreen } from "/static/js/ui.js";
+    import { onAuthStateChanged, logoutUser } from "/static/js/firebase-client.js";
+
+    // Boot
+    initMatrix();
+    // Delay the fade so users see the matrix animation
+    setTimeout(() => hideLoadingScreen(), 1800);
+
+    // Auth state — show/hide nav links
+    onAuthStateChanged((user) => {
+      const pub  = document.getElementById("nav-public");
+      const priv = document.getElementById("nav-auth");
+      const name = document.getElementById("nav-username");
+      if (user) {
+        pub.style.display  = "none";
+        priv.style.display = "flex";
+        if (name) name.textContent = user.displayName || user.email;
+      } else {
+        pub.style.display  = "flex";
+        priv.style.display = "none";
+        // Redirect to signin if on a protected page
+        const protected_paths = ["/dashboard", "/project"];
+        if (protected_paths.some(p => location.pathname.startsWith(p))) {
+          window.location.href = "/signin";
+        }
+      }
+    });
+
+    // Logout
+    document.getElementById("nav-logout")?.addEventListener("click", async (e) => {
+      e.preventDefault();
+      await logoutUser();
+      window.location.href = "/";
+    });
+
+    const revealSelectors = [
+      "section",
+      ".card",
+      ".hero-panel",
+      ".dashboard-panel",
+      ".stat-box",
+      ".api-card",
+      ".api-endpoints",
+      ".project-card",
+      ".new-project-card",
+      ".data-table",
+      ".terminal",
+      ".code-block",
+    ];
+
+    const revealElements = [...document.querySelectorAll(revealSelectors.join(","))];
+    if ("IntersectionObserver" in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        });
+      }, {
+        threshold: 0.12,
+        rootMargin: "0px 0px -8% 0px"
+      });
+
+      revealElements.forEach((element, index) => {
+        element.classList.add("reveal-on-scroll");
+        element.style.transitionDelay = `${Math.min(index % 6, 5) * 60}ms`;
+        observer.observe(element);
+      });
+    } else {
+      revealElements.forEach((element) => {
+        element.classList.add("is-visible");
+      });
+    }
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

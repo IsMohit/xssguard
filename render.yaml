@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: xssguard
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: "False"
+      - key: FLASK_SECRET_KEY
+        sync: false          # You'll fill this in Render dashboard
+      - key: FIREBASE_SERVICE_ACCOUNT_PATH
+        value: /etc/secrets/firebase_service_account.json
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_API_KEY
+        sync: false
+      - key: FIREBASE_AUTH_DOMAIN
+        sync: false
+      - key: FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: FIREBASE_MESSAGING_SENDER_ID
+        sync: false
+      - key: FIREBASE_APP_ID
+        sync: false
+      - key: MODEL_PATH
+        value: ml_model/xss_cnn_lstm_model.h5
+      - key: TOKENIZER_PATH
+        value: ml_model/tokenizer.pkl

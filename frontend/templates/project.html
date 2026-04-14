@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}Project Detail{% endblock %}
+
+{% block nav_links %}
+<div class="nav-links">
+  <span class="nav-link" id="nav-username" style="color:var(--yellow)"></span>
+  <a class="nav-link" href="/dashboard">Dashboard</a>
+  <button class="nav-link" id="logout-btn" style="background:none;border:none;font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;cursor:pointer;">Logout</button>
+</div>
+{% endblock %}
+
+{% block loading %}{% endblock %}
+
+{% block extra_css %}
+<style>
+.key-box { background:var(--bg4); border:1px solid var(--yellow-border); padding:14px 18px; font-family:var(--font-tech); font-size:13px; color:var(--yellow); display:flex; align-items:center; justify-content:space-between; word-break:break-all; gap:12px; }
+.detail-back { font-family:var(--font-mono); font-size:11px; color:var(--text-dim); cursor:pointer; letter-spacing:2px; display:inline-flex; align-items:center; gap:8px; transition:color .2s; text-decoration:none; }
+.detail-back:hover { color:var(--yellow); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">Navigation</div>
+    <div class="sidebar-item" onclick="window.location.href='/dashboard'"><span class="sidebar-icon">◈</span> Overview</div>
+    <div class="sidebar-item active"><span class="sidebar-icon">⬡</span> Project Detail</div>
+    <div class="sidebar-section">Account</div>
+    <div class="sidebar-item" onclick="window.location.href='/dashboard'"><span class="sidebar-icon">⊕</span> Settings</div>
+    <div class="sidebar-bottom">
+      <div class="sidebar-item" id="sb-logout"><span class="sidebar-icon">←</span> Logout</div>
+    </div>
+  </aside>
+
+  <main class="dash-main" style="position:relative;z-index:10;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:36px;padding-bottom:28px;border-bottom:1px solid var(--yellow-border);">
+      <a class="detail-back" href="/dashboard">← Back to Dashboard</a>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dimmer);">
+        Project ID: <span id="proj-id" style="color:var(--yellow)">{{ project_id }}</span>
+      </div>
+    </div>
+
+    <!-- Project header -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:32px;">
+      <div>
+        <div id="proj-name" style="font-family:var(--font-display);font-size:40px;letter-spacing:3px;color:var(--yellow);text-transform:uppercase;line-height:1;margin-bottom:6px;">LOADING...</div>
+        <div id="proj-created" style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);"></div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-outline btn-sm" id="rotate-key-btn">↻ Rotate Key</button>
+        <button class="btn btn-danger btn-sm" id="delete-proj-btn">Delete Project</button>
+      </div>
+    </div>
+
+    <!-- API Key display -->
+    <div class="card" style="margin-bottom:32px;">
+      <div class="card-header">// API Key</div>
+      <p style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);margin-bottom:14px;">
+        Only the key prefix is shown for security. The full key was displayed once at creation.
+        Rotate to generate a new key.
+      </p>
+      <div class="key-box">
+        <span id="key-prefix-display">sk-••••••••••••••••••••••••••••••••</span>
+        <button class="btn btn-outline btn-sm" id="copy-key-btn" style="white-space:nowrap;">Copy Prefix</button>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-row" style="margin-bottom:32px;">
+      <div class="stat-box"><div class="stat-label">Total Scans</div><div class="stat-value" id="detail-total">—</div></div>
+      <div class="stat-box"><div class="stat-label">Malicious Blocked</div><div class="stat-value" id="detail-malicious" style="color:var(--danger)">—</div></div>
+      <div class="stat-box"><div class="stat-label">Safe Passed</div><div class="stat-value" id="detail-safe" style="color:var(--success)">—</div></div>
+      <div class="stat-box"><div class="stat-label">Detection Rate</div><div class="stat-value" id="detail-rate">—</div></div>
+    </div>
+
+    <!-- Logs table -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-family:var(--font-tech);font-size:13px;letter-spacing:3px;color:var(--text);text-transform:uppercase;">// Recent Scans</div>
+    </div>
+    <table class="data-table">
+      <thead><tr>
+        <th>Timestamp</th><th>Input Preview</th><th>Result</th><th>Confidence</th><th>Risk</th>
+      </tr></thead>
+      <tbody id="detail-tbody">
+        <tr class="empty-row"><td colspan="5">Loading...</td></tr>
+      </tbody>
+    </table>
+  </main>
+</div>
+
+<!-- Rotate key confirm modal -->
+<div class="modal-overlay" id="rotate-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('rotate-modal').classList.remove('open')">✕</button>
+    <div class="modal-title" style="color:var(--danger)">Rotate Key?</div>
+    <div class="modal-sub">// The current key will be deactivated immediately. Any app using it will break.</div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-danger" style="flex:1;" id="confirm-rotate-btn">Yes, Rotate Key</button>
+      <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('rotate-modal').classList.remove('open')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- New key reveal modal -->
+<div class="modal-overlay" id="new-key-modal">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--success)">New Key Generated</div>
+    <div class="modal-sub">// Copy this key now — it will never be shown again</div>
+    <div style="background:var(--bg4);border:1px solid var(--yellow-border);padding:14px 16px;font-family:var(--font-tech);font-size:12px;color:var(--yellow);word-break:break-all;margin-bottom:16px;" id="new-key-display"></div>
+    <button class="btn btn-primary" style="width:100%;" id="new-key-copy-btn">Copy New Key</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:10px;" onclick="document.getElementById('new-key-modal').classList.remove('open')">Done</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import { showToast, escHtml, copyToClipboard, requireAuth, authFetch, formatDate, formatDateTime, initMatrix } from "/static/js/utils.js";
+initMatrix();
+
+const PROJECT_ID = "{{ project_id }}";
+let projectData = null;
+
+requireAuth(async (user) => {
+  document.getElementById("nav-username").textContent = user.displayName || user.email;
+  await loadProject();
+  await loadLogs();
+});
+
+async function loadProject() {
+  try {
+    const res = await authFetch(`/api/projects/${PROJECT_ID}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    projectData = data;
+
+    document.getElementById("proj-name").textContent = data.name.toUpperCase();
+    document.getElementById("proj-created").textContent = `// Created ${formatDate(data.createdAt)}`;
+    document.getElementById("key-prefix-display").textContent = data.key_prefix + "••••••••••••••••••••••••••";
+    document.getElementById("detail-total").textContent = data.totalScans || 0;
+    document.getElementById("detail-malicious").textContent = data.maliciousDetected || 0;
+    const safe = (data.totalScans || 0) - (data.maliciousDetected || 0);
+    document.getElementById("detail-safe").textContent = safe;
+    const rate = data.totalScans > 0
+      ? Math.round((data.maliciousDetected / data.totalScans) * 100) + "%"
+      : "—";
+    document.getElementById("detail-rate").textContent = rate;
+  } catch(e) {
+    showToast("error","LOAD ERROR", e.message || "Failed to load project.");
+  }
+}
+
+async function loadLogs() {
+  const tbody = document.getElementById("detail-tbody");
+  try {
+    const res = await authFetch(`/api/projects/${PROJECT_ID}/logs?limit=50`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    const logs = data.logs || [];
+    if (!logs.length) {
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="5">// No scan activity yet for this project.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = logs.map(l => `<tr>
+      <td>${formatDateTime(l.timestamp)}</td>
+      <td>${escHtml((l.input_preview||"").substring(0,56))}${(l.input_preview||"").length>56?"...":""}</td>
+      <td><span class="badge badge-${l.prediction}">${(l.prediction||"unknown").toUpperCase()}</span></td>
+      <td>${l.confidence||0}%</td>
+      <td style="color:${l.prediction==="malicious"?"var(--danger)":"var(--success)"}">${l.prediction==="malicious"?"HIGH":"—"}</td>
+    </tr>`).join("");
+  } catch(e) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="5">// Failed to load logs.</td></tr>`;
+  }
+}
+
+document.getElementById("copy-key-btn").addEventListener("click", () => {
+  if (projectData) {
+    copyToClipboard(projectData.key_prefix + "...");
+    showToast("info","COPIED","Key prefix copied (full key not stored).");
+  }
+});
+
+document.getElementById("rotate-key-btn").addEventListener("click", () => {
+  document.getElementById("rotate-modal").classList.add("open");
+});
+
+document.getElementById("confirm-rotate-btn").addEventListener("click", async () => {
+  const btn = document.getElementById("confirm-rotate-btn");
+  btn.disabled = true; btn.textContent = "ROTATING...";
+  try {
+    const res = await authFetch(`/api/projects/${PROJECT_ID}/rotate-key`, { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    document.getElementById("rotate-modal").classList.remove("open");
+    document.getElementById("new-key-display").textContent = data.api_key;
+    document.getElementById("new-key-modal").classList.add("open");
+    showToast("success","KEY ROTATED","New API key generated. Copy it now.");
+    await loadProject();
+  } catch(e) {
+    showToast("error","ROTATE FAILED", e.message || "Failed to rotate key.");
+  } finally {
+    btn.disabled = false; btn.textContent = "Yes, Rotate Key";
+  }
+});
+
+document.getElementById("new-key-copy-btn").addEventListener("click", async () => {
+  await copyToClipboard(document.getElementById("new-key-display").textContent);
+  showToast("success","COPIED","New API key copied.");
+  document.getElementById("new-key-copy-btn").textContent = "✓ Copied!";
+});
+
+document.getElementById("delete-proj-btn").addEventListener("click", async () => {
+  if (!confirm(`Delete project "${projectData?.name}"? This cannot be undone.`)) return;
+  try {
+    const res = await authFetch(`/api/projects/${PROJECT_ID}`, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    showToast("success","DELETED","Project deleted. Redirecting...");
+    setTimeout(() => window.location.href = "/dashboard", 900);
+  } catch(e) {
+    showToast("error","DELETE FAILED", e.message || "Failed to delete project.");
+  }
+});
+
+async function doLogout() {
+  await window.XSSGuardFirebase?.signOut();
+  window.location.href = "/";
+}
+document.getElementById("logout-btn")?.addEventListener("click", doLogout);
+document.getElementById("sb-logout")?.addEventListener("click", doLogout);
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Sign In{% endblock %}
+
+{% block content %}
+<div style="display:flex;min-height:calc(100vh - 60px);">
+  <!-- Left brand panel -->
+  <div style="flex:1;background:var(--bg2);border-right:1px solid var(--yellow-border);display:flex;flex-direction:column;justify-content:center;padding:60px 60px;position:relative;overflow:hidden;">
+    <div class="grid-overlay"></div>
+    <div style="font-family:var(--font-display);font-size:56px;letter-spacing:4px;color:var(--yellow);line-height:.9;text-transform:uppercase;position:relative;z-index:2;margin-bottom:0;">WELCOME<br><span style="color:var(--text);opacity:.3">BACK</span><br>AGENT.</div>
+    <p style="font-family:var(--font-mono);font-size:12px;color:var(--text-dim);margin-top:28px;line-height:1.9;max-width:360px;position:relative;z-index:2;">Access your XSSGuard dashboard to manage API keys, monitor scan activity, and protect your applications.</p>
+    <div style="margin-top:44px;display:flex;flex-direction:column;gap:14px;position:relative;z-index:2;">
+      {% for feat in ["Real-time detection dashboard","Multi-project API key management","Usage logs & threat analytics","Instant API key generation"] %}
+      <div style="display:flex;align-items:center;gap:14px;font-family:var(--font-mono);font-size:11px;color:var(--text-dim);">
+        <div style="width:28px;height:28px;border:1px solid var(--yellow-border);display:flex;align-items:center;justify-content:center;color:var(--yellow);font-size:12px;flex-shrink:0;">✓</div>
+        {{ feat }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <!-- Right form -->
+  <div style="width:460px;display:flex;flex-direction:column;justify-content:center;padding:60px 56px;overflow-y:auto;max-height:calc(100vh - 60px);">
+    <div style="font-family:var(--font-display);font-size:32px;letter-spacing:3px;color:var(--yellow);text-transform:uppercase;margin-bottom:6px;">Sign In</div>
+    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);margin-bottom:32px;">// Enter your credentials to access the console</div>
+
+    <div id="form-error" style="display:none;background:var(--danger-glow);border:1px solid rgba(255,60,60,.3);padding:12px 16px;font-family:var(--font-mono);font-size:11px;color:var(--danger);margin-bottom:20px;letter-spacing:.5px;"></div>
+
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input type="email" id="email" class="form-input" placeholder="agent@example.io" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" id="password" class="form-input" placeholder="••••••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" style="width:100%;justify-content:center;margin-top:4px;" id="submit-btn" onclick="handleSignin()">→ AUTHENTICATE</button>
+    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);text-align:center;margin-top:22px;">
+      No account? <a href="/signup" style="color:var(--yellow);text-decoration:none;">Create one here →</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import { loginUser } from "/static/js/firebase-client.js";
+  import { redirectIfAuthed } from "/static/js/utils.js";
+  import { toast } from "/static/js/ui.js";
+
+  redirectIfAuthed();
+
+  window.handleSignin = async function() {
+    const email    = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const btn      = document.getElementById("submit-btn");
+    const errBox   = document.getElementById("form-error");
+
+    errBox.style.display = "none";
+    if (!email)    return showErr("Email is required.");
+    if (!password) return showErr("Password is required.");
+
+    btn.textContent = "→ AUTHENTICATING...";
+    btn.disabled = true;
+
+    try {
+      await loginUser(email, password);
+      toast("success", "ACCESS GRANTED", "Welcome back! Redirecting...");
+      setTimeout(() => window.location.href = "/dashboard", 600);
+    } catch (err) {
+      btn.textContent = "→ AUTHENTICATE";
+      btn.disabled = false;
+      const msg = err.code === "auth/invalid-credential" || err.code === "auth/wrong-password" || err.code === "auth/user-not-found"
+        ? "Invalid email or password."
+        : err.code === "auth/too-many-requests"
+        ? "Too many failed attempts. Try again later."
+        : err.message;
+      showErr(msg);
+      toast("error", "AUTH FAILED", msg);
+    }
+  };
+
+  function showErr(msg) {
+    const b = document.getElementById("form-error");
+    b.textContent = "⚠ " + msg;
+    b.style.display = "block";
+  }
+
+  document.getElementById("password").addEventListener("keydown", e => {
+    if (e.key === "Enter") window.handleSignin();
+  });
+</script>
+{% endblock %}

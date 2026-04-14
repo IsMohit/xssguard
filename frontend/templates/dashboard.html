@@ -1,0 +1,952 @@
+
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block head %}
+<style>
+.dashboard-shell {
+  position: relative;
+  min-height: calc(100vh - var(--nav-h));
+}
+.dashboard-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(245, 197, 0, 0.14), transparent 26%),
+    radial-gradient(circle at 14% 82%, rgba(245, 197, 0, 0.09), transparent 24%),
+    linear-gradient(135deg, rgba(245, 197, 0, 0.05), transparent 42%);
+  pointer-events: none;
+}
+.dashboard-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(245, 197, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245, 197, 0, 0.04) 1px, transparent 1px);
+  background-size: 120px 120px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.22), transparent 72%);
+  opacity: 0.35;
+  pointer-events: none;
+}
+.dashboard-inner {
+  position: relative;
+  z-index: 1;
+}
+.dash-main {
+  padding: 36px 40px 56px;
+}
+.dashboard-mobile-nav {
+  display: none;
+  gap: 10px;
+  overflow-x: auto;
+  margin-bottom: 24px;
+  padding-bottom: 6px;
+}
+.dashboard-mobile-tab {
+  border: 1px solid var(--yellow-border);
+  background: rgba(15, 15, 11, 0.88);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  white-space: nowrap;
+}
+.dashboard-mobile-tab.active {
+  color: var(--yellow);
+  background: var(--yellow-glow);
+  border-color: var(--yellow);
+}
+.sidebar {
+  background: rgba(15, 15, 11, 0.92);
+  backdrop-filter: blur(12px);
+}
+.sidebar-item.tab-trigger {
+  width: 100%;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+  gap: 22px;
+  margin-bottom: 28px;
+}
+.hero-panel,
+.dashboard-panel {
+  background: rgba(15, 15, 11, 0.88);
+  border: 1px solid rgba(245, 197, 0, 0.16);
+}
+.hero-panel {
+  padding: 30px 30px 26px;
+  background:
+    linear-gradient(180deg, rgba(245, 197, 0, 0.08), rgba(245, 197, 0, 0.02)),
+    rgba(15, 15, 11, 0.92);
+}
+.hero-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+.hero-title {
+  font-family: var(--font-display);
+  font-size: 50px;
+  letter-spacing: 3px;
+  line-height: 0.94;
+  color: var(--yellow);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.hero-subcopy {
+  max-width: 620px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.9;
+}
+.hero-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+.hero-meta-chip {
+  border: 1px solid rgba(245, 197, 0, 0.15);
+  background: rgba(245, 197, 0, 0.06);
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text);
+  letter-spacing: 1px;
+}
+.dashboard-stack {
+  display: grid;
+  gap: 18px;
+}
+.dashboard-panel {
+  padding: 22px;
+}
+.summary-list {
+  display: grid;
+  gap: 12px;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(245, 197, 0, 0.08);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.summary-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
+  gap: 22px;
+  margin-bottom: 36px;
+}
+.stats-row {
+  margin-bottom: 36px;
+}
+.stat-box {
+  background: rgba(15, 15, 11, 0.9);
+}
+.api-card-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.04fr) minmax(300px, 0.96fr);
+  gap: 22px;
+  margin-bottom: 36px;
+}
+.api-card,
+.api-endpoints {
+  background: rgba(15, 15, 11, 0.9);
+  border: 1px solid var(--yellow-border);
+  padding: 24px;
+  min-width: 0;
+  overflow: hidden;
+}
+.endpoint-row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) minmax(0, 0.9fr);
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(245, 197, 0, 0.08);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.endpoint-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.endpoint-method {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--success);
+}
+.endpoint-path,
+.endpoint-desc {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.api-card .code-block,
+.api-card pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.api-card pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.dash-section-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.dash-section-title {
+  font-family: var(--font-tech);
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: var(--text);
+  text-transform: uppercase;
+}
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+}
+.project-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 290px;
+  background: linear-gradient(180deg, var(--bg2), var(--bg3));
+  border: 1px solid rgba(245, 197, 0, 0.16);
+  padding: 22px;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.project-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(245, 197, 0, 0.09), transparent 46%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.project-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--yellow);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.26);
+}
+.project-card > * {
+  position: relative;
+  z-index: 1;
+}
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.project-name {
+  font-family: var(--font-tech);
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--text);
+  text-transform: uppercase;
+}
+.project-status {
+  border: 1px solid rgba(245, 197, 0, 0.24);
+  background: rgba(245, 197, 0, 0.08);
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--yellow);
+  white-space: nowrap;
+}
+.project-desc {
+  min-height: 62px;
+  margin-bottom: 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.8;
+}
+.project-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.project-info-box {
+  background: rgba(245, 197, 0, 0.05);
+  border: 1px solid rgba(245, 197, 0, 0.12);
+  padding: 12px;
+}
+.project-info-label {
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dimmer);
+  text-transform: uppercase;
+}
+.project-info-value {
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 1;
+  color: var(--yellow);
+}
+.project-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.project-key-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-top: auto;
+  padding: 10px 12px;
+  border: 1px solid rgba(245, 197, 0, 0.16);
+  background: rgba(245, 197, 0, 0.07);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--yellow);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.project-key-row:hover {
+  background: rgba(245, 197, 0, 0.14);
+  border-color: rgba(245, 197, 0, 0.28);
+}
+.new-project-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 290px;
+  background: linear-gradient(180deg, var(--bg2), var(--bg3));
+  border: 1px dashed var(--yellow-border);
+  padding: 32px;
+  gap: 14px;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.new-project-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--yellow);
+  background: var(--yellow-glow);
+}
+.new-icon {
+  font-family: var(--font-display);
+  font-size: 42px;
+  color: var(--yellow);
+  line-height: 1;
+}
+.new-label {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+}
+.settings-wrap {
+  max-width: 560px;
+}
+@media (max-width: 1180px) {
+  .hero-grid,
+  .overview-grid,
+  .api-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 900px) {
+  .dash-main {
+    padding: 24px 20px 40px;
+  }
+  .dashboard-mobile-nav {
+    display: flex;
+  }
+  .hero-head {
+    flex-direction: column;
+  }
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+{% endblock %}
+
+{% block loading %}{% endblock %}
+
+{% block content %}
+<div class="dash-layout dashboard-shell">
+  <aside class="sidebar" id="dashboard-sidebar">
+    <div class="sidebar-section">Navigation</div>
+    <button type="button" class="sidebar-item tab-trigger active" data-tab="overview"><span class="sidebar-icon">[]</span> Overview</button>
+    <button type="button" class="sidebar-item tab-trigger" data-tab="projects"><span class="sidebar-icon">#</span> Projects</button>
+    <button type="button" class="sidebar-item tab-trigger" data-tab="logs"><span class="sidebar-icon">*</span> Activity Log</button>
+    <div class="sidebar-section">Account</div>
+    <button type="button" class="sidebar-item tab-trigger" data-tab="settings"><span class="sidebar-icon">+</span> Settings</button>
+    <div class="sidebar-bottom">
+      <button type="button" class="sidebar-item" id="sb-logout"><span class="sidebar-icon">&lt;</span> Logout</button>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dashboard-inner">
+      <div class="dashboard-mobile-nav" id="dashboard-mobile-nav">
+        <button type="button" class="dashboard-mobile-tab active" data-tab="overview">Overview</button>
+        <button type="button" class="dashboard-mobile-tab" data-tab="projects">Projects</button>
+        <button type="button" class="dashboard-mobile-tab" data-tab="logs">Activity Log</button>
+        <button type="button" class="dashboard-mobile-tab" data-tab="settings">Settings</button>
+      </div>
+
+      <section class="tab-content active" id="tab-overview">
+        <div class="hero-grid">
+          <div class="hero-panel">
+            <div class="hero-head">
+              <div>
+                <div class="hero-title">Control XSS Operations</div>
+                <div class="hero-subcopy">
+                  Manage project keys, review scan activity, and access only the XSS endpoints that matter. The public landing page stays product-focused while operational detail lives here.
+                </div>
+                <div class="hero-meta">
+                  <div class="hero-meta-chip">Signed in as <span id="dash-name" style="color:var(--yellow)"></span></div>
+                  <div class="hero-meta-chip">Authenticated workspace</div>
+                  <div class="hero-meta-chip">Model: CNN-LSTM</div>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm" id="new-proj-btn-overview">New Project</button>
+            </div>
+          </div>
+
+          <div class="dashboard-stack">
+            <div class="dashboard-panel">
+              <div class="card-header">// Workspace Snapshot</div>
+              <div class="summary-list">
+                <div class="summary-row"><span style="color:var(--text-dim);">Focus</span><span style="color:var(--text);">XSS detection workflow</span></div>
+                <div class="summary-row"><span style="color:var(--text-dim);">Visible endpoints</span><span style="color:var(--text);">Dashboard only</span></div>
+                <div class="summary-row"><span style="color:var(--text-dim);">Projects</span><span id="summary-projects" style="color:var(--yellow);">0</span></div>
+              </div>
+            </div>
+
+            <div class="dashboard-panel">
+              <div class="card-header">// Quick Guidance</div>
+              <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);line-height:1.85;">
+                Create a project, copy the generated API key once, then use the XSS endpoints below. Open any project card to review details and recent usage.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-label">Total Scans</div><div class="stat-value" id="stat-total">0</div><div class="stat-trend">Across all projects</div></div>
+          <div class="stat-box"><div class="stat-label">Threats Blocked</div><div class="stat-value" id="stat-threats" style="color:var(--danger)">0</div><div class="stat-trend">Detected as malicious</div></div>
+          <div class="stat-box"><div class="stat-label">Active Projects</div><div class="stat-value" id="stat-projects">0</div><div class="stat-trend">Ready for API traffic</div></div>
+          <div class="stat-box"><div class="stat-label">Runtime</div><div class="stat-value" style="font-size:28px;">CNN<span style="font-size:20px">-LSTM</span></div><div class="stat-trend">Primary scan model</div></div>
+        </div>
+
+        <div class="overview-grid">
+          <div>
+            <div class="api-card-grid" style="margin-bottom:0;">
+              <div class="api-card">
+                <div class="card-header">// Authenticated XSS API</div>
+                <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);line-height:1.85;">
+                  Use these XSS routes with your project API key. Internal auth and project-management routes stay out of the public UI.
+                </div>
+                <div class="code-block" style="margin-top:16px;">
+                  <div class="code-header"><span class="code-lang">Example</span></div>
+                  <pre>POST /api/xss/check
+X-API-Key: sk-...
+
+{
+  "input": "&lt;script&gt;alert(1)&lt;/script&gt;"
+}</pre>
+                </div>
+              </div>
+
+              <div class="api-endpoints">
+                <div class="card-header">// Available Endpoints</div>
+                {% for method, path, desc in [
+                  ("POST", "/api/xss/check", "Single input scan"),
+                  ("POST", "/api/xss/batch-check", "Batch scan up to 100 inputs"),
+                  ("GET", "/api/xss/health", "Model runtime health"),
+                  ("GET", "/api/xss/model-info", "Model details"),
+                  ("GET", "/api/xss/stats", "Recent malicious-attempt stats")
+                ] %}
+                <div class="endpoint-row">
+                  <span class="endpoint-method">{{ method }}</span>
+                  <span class="endpoint-path" style="color:var(--text);">{{ path }}</span>
+                  <span class="endpoint-desc" style="color:var(--text-dim);">{{ desc }}</span>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-stack">
+            <div class="dashboard-panel">
+              <div class="card-header">// What To Do Next</div>
+              <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);line-height:1.85;">
+                Start by creating a dedicated project per integration. That keeps usage counters and logs separated, and makes API key rotation manageable.
+              </div>
+            </div>
+
+            <div class="dashboard-panel">
+              <div class="card-header">// Coverage</div>
+              <div class="summary-list">
+                <div class="summary-row"><span style="color:var(--text-dim);">Single checks</span><span style="color:var(--text);">/api/xss/check</span></div>
+                <div class="summary-row"><span style="color:var(--text-dim);">Batch checks</span><span style="color:var(--text);">/api/xss/batch-check</span></div>
+                <div class="summary-row"><span style="color:var(--text-dim);">Observability</span><span style="color:var(--text);">Health, model info, stats</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-section-hdr">
+          <div class="dash-section-title">// Your Projects</div>
+          <button class="btn btn-outline btn-sm" type="button" data-tab="projects">View All</button>
+        </div>
+        <div class="projects-grid" id="overview-grid"></div>
+      </section>
+
+      <section class="tab-content" id="tab-projects">
+        <div class="hero-grid" style="margin-bottom:24px;">
+          <div class="hero-panel">
+            <div class="hero-head">
+              <div>
+                <div class="hero-title">Projects</div>
+                <div class="hero-subcopy">
+                  Each project owns its own API key prefix, scan counters, and recent activity context. Keep integrations separated so usage and incident review stay clear.
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm" id="new-proj-btn-tab">New Project</button>
+            </div>
+          </div>
+
+          <div class="dashboard-panel">
+            <div class="card-header">// Project Notes</div>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);line-height:1.85;">
+              Open a project card to inspect details. The dashboard shows the key prefix only; the full key is displayed once when a project is created.
+            </div>
+          </div>
+        </div>
+
+        <div class="projects-grid" id="projects-grid"></div>
+      </section>
+
+      <section class="tab-content" id="tab-logs">
+        <div class="hero-grid" style="margin-bottom:24px;">
+          <div class="hero-panel">
+            <div class="hero-title">Activity Log</div>
+            <div class="hero-subcopy">
+              Review recent scan requests across all of your projects. This table consolidates project logs so you can spot malicious patterns quickly.
+            </div>
+          </div>
+
+          <div class="dashboard-panel">
+            <div class="card-header">// Log Scope</div>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);line-height:1.85;">
+              Logs are pulled from each project and sorted by most recent activity. If a project has no scans yet, it will simply contribute no rows here.
+            </div>
+          </div>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Project</th>
+              <th>Input Preview</th>
+              <th>Result</th>
+              <th>Confidence</th>
+              <th>Risk</th>
+            </tr>
+          </thead>
+          <tbody id="log-tbody">
+            <tr class="empty-row"><td colspan="6">Loading...</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="tab-content" id="tab-settings">
+        <div class="hero-grid" style="margin-bottom:24px;">
+          <div class="hero-panel">
+            <div class="hero-title">Settings</div>
+            <div class="hero-subcopy">
+              Update your profile details and manage the current session from one place.
+            </div>
+          </div>
+
+          <div class="dashboard-panel">
+            <div class="card-header">// Session</div>
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);line-height:1.85;">
+              Display name changes update the UI immediately. Signing out ends the current session and returns you to the landing page.
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-wrap">
+          <div class="card" style="margin-bottom:20px;">
+            <div class="card-header">// Account Info</div>
+            <div class="form-group">
+              <label class="form-label">Display Name</label>
+              <input type="text" class="form-input" id="settings-name">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" id="settings-email" disabled>
+            </div>
+            <button class="btn btn-primary btn-sm" id="save-settings-btn">Save Changes</button>
+          </div>
+
+          <div class="card" style="border-color:rgba(255,60,60,.3);">
+            <div class="card-header" style="color:var(--danger);border-color:rgba(255,60,60,.15);">// Danger Zone</div>
+            <p style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);margin-bottom:16px;">Signing out will end your current session.</p>
+            <button class="btn btn-danger btn-sm" id="settings-logout-btn">Sign Out</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="new-project-modal">
+  <div class="modal">
+    <button class="modal-close" id="modal-close-btn">X</button>
+    <div class="modal-title">New Project</div>
+    <div class="modal-sub">// An API key will be generated for this project</div>
+    <div class="form-group">
+      <label class="form-label">Project Name</label>
+      <input type="text" class="form-input" id="new-proj-name" placeholder="e.g. My Blog API">
+      <div class="form-error" id="proj-name-err"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description (optional)</label>
+      <input type="text" class="form-input" id="new-proj-desc" placeholder="Brief description">
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:15px;" id="create-proj-btn">Create Project</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="key-modal">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--success);">Key Generated</div>
+    <div class="modal-sub">// Copy this key now. It will not be shown again.</div>
+    <div style="background:var(--bg4);border:1px solid var(--yellow-border);padding:16px 18px;font-family:var(--font-tech);font-size:13px;color:var(--yellow);word-break:break-all;margin-bottom:18px;" id="key-display"></div>
+    <button class="btn btn-primary" style="width:100%;" id="key-copy-btn">Copy API Key</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:10px;" id="key-done-btn">Done</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import { showToast, escHtml, copyToClipboard, requireAuth, authFetch, formatDate, formatDateTime, initMatrix } from "/static/js/utils.js";
+
+initMatrix();
+
+let projectsCache = [];
+
+requireAuth(async (user) => {
+  const displayName = user.displayName || user.email || "User";
+  document.getElementById("dash-name").textContent = displayName;
+  document.getElementById("nav-username").textContent = displayName;
+  document.getElementById("settings-name").value = user.displayName || "";
+  document.getElementById("settings-email").value = user.email || "";
+  await loadProjects();
+});
+
+document.getElementById("dashboard-sidebar")?.addEventListener("click", (event) => {
+  const trigger = event.target.closest("[data-tab]");
+  if (!trigger) return;
+  switchTab(trigger.dataset.tab);
+});
+
+document.getElementById("dashboard-mobile-nav")?.addEventListener("click", (event) => {
+  const trigger = event.target.closest("[data-tab]");
+  if (!trigger) return;
+  switchTab(trigger.dataset.tab);
+});
+
+document.querySelectorAll("[data-tab]").forEach((element) => {
+  if (element.closest("#dashboard-sidebar") || element.closest("#dashboard-mobile-nav")) {
+    return;
+  }
+  element.addEventListener("click", () => switchTab(element.dataset.tab));
+});
+
+function setActiveTabSelectors(selector, tab) {
+  document.querySelectorAll(selector).forEach((element) => {
+    element.classList.toggle("active", element.dataset.tab === tab);
+  });
+}
+
+function switchTab(tab) {
+  document.querySelectorAll(".tab-content").forEach((panel) => {
+    panel.classList.toggle("active", panel.id === `tab-${tab}`);
+  });
+  setActiveTabSelectors(".sidebar-item[data-tab]", tab);
+  setActiveTabSelectors(".dashboard-mobile-tab[data-tab]", tab);
+  if (tab === "logs") {
+    loadLogs();
+  }
+}
+
+async function loadProjects() {
+  try {
+    const response = await authFetch("/api/projects/");
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to load projects.");
+    projectsCache = data.projects || [];
+    renderProjects();
+    updateStats();
+  } catch (error) {
+    showToast("error", "LOAD ERROR", error.message || "Failed to load projects.");
+  }
+}
+
+function updateStats() {
+  const totalScans = projectsCache.reduce((sum, project) => sum + (project.totalScans || 0), 0);
+  const threats = projectsCache.reduce((sum, project) => sum + (project.maliciousDetected || 0), 0);
+  document.getElementById("stat-total").textContent = totalScans;
+  document.getElementById("stat-threats").textContent = threats;
+  document.getElementById("stat-projects").textContent = projectsCache.length;
+  document.getElementById("summary-projects").textContent = projectsCache.length;
+}
+
+function createProjectCard(project) {
+  const card = document.createElement("div");
+  card.className = "project-card";
+  card.innerHTML = `
+    <div class="project-header">
+      <div class="project-name">${escHtml(project.name)}</div>
+      <div class="project-status">ACTIVE</div>
+    </div>
+    <div class="project-desc">${escHtml(project.description || "No description added for this project yet.")}</div>
+    <div class="project-foot">
+      <span>Created ${formatDate(project.createdAt)}</span>
+      <span>ID ${escHtml(project.id)}</span>
+    </div>
+    <div class="project-info-grid">
+      <div class="project-info-box">
+        <div class="project-info-label">Total Scans</div>
+        <div class="project-info-value">${project.totalScans || 0}</div>
+      </div>
+      <div class="project-info-box">
+        <div class="project-info-label">Threats Blocked</div>
+        <div class="project-info-value" style="color:var(--danger);">${project.maliciousDetected || 0}</div>
+      </div>
+    </div>
+    <div class="project-key-row">
+      <span>${escHtml(project.key_prefix)}................</span>
+      <span style="font-size:9px;opacity:.7;">COPY PREFIX</span>
+    </div>
+  `;
+
+  card.querySelector(".project-key-row").addEventListener("click", (event) => {
+    event.stopPropagation();
+    copyToClipboard(`${project.key_prefix}...`);
+    showToast("info", "COPIED", "Key prefix copied (full key is never stored).");
+  });
+
+  card.addEventListener("click", () => {
+    window.location.href = `/project/${project.id}`;
+  });
+
+  return card;
+}
+
+function createNewProjectCard() {
+  const card = document.createElement("div");
+  card.className = "new-project-card";
+  card.innerHTML = `<div class="new-icon">+</div><div class="new-label">Create a new protected project</div>`;
+  card.addEventListener("click", openModal);
+  return card;
+}
+
+function renderProjects() {
+  ["overview-grid", "projects-grid"].forEach((id) => {
+    const grid = document.getElementById(id);
+    if (!grid) return;
+    grid.innerHTML = "";
+    projectsCache.forEach((project) => {
+      grid.appendChild(createProjectCard(project));
+    });
+    grid.appendChild(createNewProjectCard());
+  });
+}
+
+async function loadLogs() {
+  const tbody = document.getElementById("log-tbody");
+  tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Loading logs...</td></tr>`;
+
+  try {
+    const allLogs = [];
+    for (const project of projectsCache) {
+      const response = await authFetch(`/api/projects/${project.id}/logs?limit=20`);
+      const data = await response.json();
+      (data.logs || []).forEach((log) => {
+        allLogs.push({ ...log, projectName: project.name });
+      });
+    }
+
+    allLogs.sort((a, b) => (b.timestamp?._seconds || 0) - (a.timestamp?._seconds || 0));
+
+    if (!allLogs.length) {
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="6">// No scan activity yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = allLogs.slice(0, 60).map((log) => `
+      <tr>
+        <td>${formatDateTime(log.timestamp)}</td>
+        <td>${escHtml(log.projectName || "-")}</td>
+        <td>${escHtml((log.input_preview || "").substring(0, 44))}${(log.input_preview || "").length > 44 ? "..." : ""}</td>
+        <td><span class="badge badge-${log.prediction}">${(log.prediction || "unknown").toUpperCase()}</span></td>
+        <td>${log.confidence || 0}%</td>
+        <td style="color:${log.prediction === "malicious" ? "var(--danger)" : "var(--success)"}">${log.prediction === "malicious" ? "HIGH" : "-"}</td>
+      </tr>
+    `).join("");
+  } catch (error) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">// Failed to load logs.</td></tr>`;
+  }
+}
+
+function openModal() {
+  document.getElementById("new-proj-name").value = "";
+  document.getElementById("new-proj-desc").value = "";
+  document.getElementById("proj-name-err").textContent = "";
+  document.getElementById("proj-name-err").classList.remove("visible");
+  document.getElementById("new-project-modal").classList.add("open");
+  setTimeout(() => document.getElementById("new-proj-name").focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById("new-project-modal").classList.remove("open");
+}
+
+document.getElementById("new-proj-btn-overview").addEventListener("click", openModal);
+document.getElementById("new-proj-btn-tab").addEventListener("click", openModal);
+document.getElementById("modal-close-btn").addEventListener("click", closeModal);
+document.getElementById("new-project-modal").addEventListener("click", (event) => {
+  if (event.target === event.currentTarget) closeModal();
+});
+
+document.getElementById("create-proj-btn").addEventListener("click", async () => {
+  const name = document.getElementById("new-proj-name").value.trim();
+  const description = document.getElementById("new-proj-desc").value.trim();
+  const errorElement = document.getElementById("proj-name-err");
+  const button = document.getElementById("create-proj-btn");
+
+  errorElement.textContent = "";
+  errorElement.classList.remove("visible");
+
+  if (!name) {
+    errorElement.textContent = "Project name is required.";
+    errorElement.classList.add("visible");
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Creating...";
+
+  try {
+    const response = await authFetch("/api/projects/", {
+      method: "POST",
+      body: JSON.stringify({ name, description })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to create project.");
+
+    closeModal();
+    document.getElementById("key-display").textContent = data.api_key;
+    document.getElementById("key-modal").classList.add("open");
+    showToast("success", "PROJECT CREATED", `"${name}" is ready.`);
+    await loadProjects();
+  } catch (error) {
+    showToast("error", "CREATE FAILED", error.message || "Failed to create project.");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Create Project";
+  }
+});
+
+document.getElementById("new-proj-name").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    document.getElementById("create-proj-btn").click();
+  }
+});
+
+document.getElementById("key-copy-btn").addEventListener("click", async () => {
+  await copyToClipboard(document.getElementById("key-display").textContent);
+  showToast("success", "COPIED", "API key copied to clipboard.");
+  document.getElementById("key-copy-btn").textContent = "Copied";
+});
+
+document.getElementById("key-done-btn").addEventListener("click", () => {
+  document.getElementById("key-modal").classList.remove("open");
+  document.getElementById("key-copy-btn").textContent = "Copy API Key";
+});
+
+document.getElementById("save-settings-btn").addEventListener("click", async () => {
+  const name = document.getElementById("settings-name").value.trim();
+  if (!name) {
+    showToast("error", "VALIDATION", "Name cannot be empty.");
+    return;
+  }
+
+  try {
+    await authFetch("/api/auth/me", {
+      method: "PATCH",
+      body: JSON.stringify({ displayName: name })
+    });
+    await window.XSSGuardFirebase?.currentUser()?.reload?.();
+    document.getElementById("dash-name").textContent = name;
+    document.getElementById("nav-username").textContent = name;
+    showToast("success", "SAVED", "Profile updated.");
+  } catch (error) {
+    showToast("error", "SAVE FAILED", "Could not update profile.");
+  }
+});
+
+async function doLogout() {
+  await window.XSSGuardFirebase?.signOut();
+  window.location.href = "/";
+}
+
+document.getElementById("nav-logout")?.addEventListener("click", doLogout);
+document.getElementById("sb-logout")?.addEventListener("click", doLogout);
+document.getElementById("settings-logout-btn")?.addEventListener("click", doLogout);
+</script>
+{% endblock %}

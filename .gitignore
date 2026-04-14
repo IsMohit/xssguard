@@ -1,0 +1,37 @@
+# ── Environment & Secrets ──────────────────────────────────
+.env
+config/firebase_service_account.json
+
+# ── Python ─────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# ── ML Models (large files — store separately) ─────────────
+ml_model/*.h5
+ml_model/tokenizer.pkl
+ml_model/xss_cnn_lstm_best.h5
+
+# ── Logs ───────────────────────────────────────────────────
+logs/*.jsonl
+logs/*.log
+
+# ── OS ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+
+# ----------- Test app 
+test-app
