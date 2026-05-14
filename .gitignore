@@ -16,9 +16,9 @@ dist/
 build/
 
 # ── ML Models (large files — store separately) ─────────────
-ml_model/*.h5
-ml_model/tokenizer.pkl
-ml_model/xss_cnn_lstm_best.h5
+#ml_model/*.h5
+#ml_model/tokenizer.pkl
+#ml_model/xss_cnn_lstm_best.h5
 
 # ── Logs ───────────────────────────────────────────────────
 logs/*.jsonl
